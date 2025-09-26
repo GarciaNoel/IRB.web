@@ -1,0 +1,84 @@
+
+
+                                  FALLOUT
+                         VAULT-13 PERSONNEL RECORD
+                        20 February 2244  0600 hours
+
+  Name: Noel               Age: 26               Gender: Male
+ Level: 14                 Exp: 91,456       Next Level: 105,000
+
+ ::: Statistics :::
+       Strength: 09         Hit Points: 099/099         Sequence: 09
+     Perception: 04        Armor Class: 040         Healing Rate: 02
+      Endurance: 07      Action Points: 10       Critical Chance: 017%
+       Charisma: 04       Melee Damage: 04          Carry Weight: 250 lbs.
+   Intelligence: 06        Damage Res.: 055%
+        Agility: 10     Radiation Res.: 074%
+           Luck: 07        Poison Res.: 035%
+
+
+ ::: Traits :::
+  Finesse
+  Sex Appeal
+ ::: Perks :::
+  Bonus Move
+  Mysterious Stranger
+  Gain Agility
+  Kama Sutra Master
+  Expert Excrement Expeditor
+
+ ::: Karma :::
+  Karma: 603 (Shield of Hope)
+  Champion
+  Grave Digger
+
+ ::: Reputation :::
+  Klamath: Liked
+  Den: Accepted
+  Vault City: Accepted
+  Gecko: Idolized
+  Modoc: Liked
+  Broken Hills: Liked
+  New Reno: Accepted
+  Redding: Antipathy
+  New California Republic: Liked
+  San Francisco: Liked
+  Raiders: Neutral
+  Vault 15: Idolized
+
+ ::: Skills :::                ::: Kills :::
+  Small Guns ..... 104%        Men ............ 068
+  Big Guns ....... 020%        Women .......... 041
+  Energy Weapons . 100%        Brahmin ........ 003
+  Unarmed ........ 068%        Radscorpions ... 025
+  Melee Weapons .. 085%        Rats ........... 006
+  Throwing ....... 040%        Dogs ........... 026
+  First aid ...... 010%        Manti .......... 014
+  Doctor ......... 005%        Plants ......... 002
+  Sneak .......... 045%        Geckos ......... 019
+  Lockpick ....... 100%        Giant Ants ..... 034
+  Steal .......... 080%
+  Traps .......... 014%
+  Science ........ 014%
+  Repair ......... 017%
+  Speech ......... 015%
+  Barter ......... 006%
+  Gambling ....... 025%
+  Outdoorsman .... 033%
+
+
+ ::: Inventory :::
+  14x Stimpak              7,482x Money             1x Vertibird Plans     
+  1x Mentats               7x 9mm ball              2x Micro Fusion Cell   
+  2x Plastic Explosives    12x Grenade (Plasma)     2x Grenade (Pulse)     
+  11x 12 ga. Shotgun Shells  1x Note from Francis     1x Tool                
+  1x Vault 15 Keycard      1x Rubber Boots          6x Small Energy Cell   
+  1x NCR History Holodisk  1x Day Pass              1x Vault 15 Shack Key  
+  1x Buffout               1x Plasma Transformer    1x Big Book of Science 
+  1x Gecko Holodisk        1x Broc Flower           1x Wakizashi Blade     
+  1x Leather Jacket        4x Vic's Water Flask     1x HK P90c             
+  1x Combat Shotgun        1x YK42B Pulse Rifle     1x Advanced Power Armor
+
+                                      Total Weight: 183 lbs.
+
+

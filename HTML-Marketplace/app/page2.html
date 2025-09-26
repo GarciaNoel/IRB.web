@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Central AI</title>
+  <style>
+    .page-ai-root {
+      display: flex;
+      height: 100%;
+      min-height: 0;
+      min-width: 0;
+      font-family: sans-serif;
+    }
+    .page-ai-root .prompt-history {
+      flex: 2 1 0;
+      border-right: 1px solid #ccc;
+      padding: 16px;
+      box-sizing: border-box;
+      overflow-y: auto;
+      min-width: 0;
+      min-height: 0;
+      background: #fafbfc;
+      display: flex;
+      flex-direction: column;
+    }
+    .page-ai-root .prompt-history-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      flex: 1 1 0;
+      overflow-y: auto;
+    }
+    .page-ai-root .prompt-history-list li {
+      margin-bottom: 10px;
+      background: #eaeaea;
+      padding: 8px;
+      border-radius: 4px;
+      word-break: break-word;
+    }
+    .page-ai-root .prompt-history-list .llm {
+      background: #d0eaff;
+    }
+    .page-ai-root .prompt-box {
+      flex: 1 1 0;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      min-height: 0;
+      background: #fff;
+    }
+    .page-ai-root .prompt-box textarea {
+      flex: 1 1 0;
+      width: 100%;
+      resize: none;
+      font-size: 1.1em;
+      font-family: monospace;
+      min-height: 0;
+      margin-bottom: 12px;
+      box-sizing: border-box;
+    }
+    .page-ai-root .prompt-box button {
+      margin-left: 8px;
+      margin-right: 8px;
+      margin-bottom: 12px;
+      font-size: 1em;
+      align-self: flex-end;
+    }
+  </style>
+</head>
+<body>
+  <div class="page-ai-root">
+    <div class="prompt-box">
+      <textarea id="prompt-input" placeholder="Type your prompt here..."></textarea>
+      <button id="send-prompt-btn">Send</button>
+    </div>
+    <div class="prompt-history">
+      <ul class="prompt-history-list" id="prompt-history-list"></ul>
+    </div>
+
+  </div>
+  <script>
+    const promptHistory = [];
+    const historyList = document.getElementById('prompt-history-list');
+    const promptInput = document.getElementById('prompt-input');
+    const sendBtn = document.getElementById('send-prompt-btn');
+
+    (async () => {
+      const savedHistory = await window.electronAPI.loadPersistent('chatHistory');
+
+      if (savedHistory) {
+        promptHistory.push(...savedHistory);
+        renderHistory();
+
+      }
+    })();
+
+    (async () => {
+      const saved = await window.electronAPI.loadPersistent('prompt-input');
+      if (typeof saved === 'string') {
+        document.getElementById('prompt-input').value = saved;
+      }
+    })();
+
+    document.getElementById('prompt-input').addEventListener('input', async (e) => {
+      await window.electronAPI.savePersistent('prompt-input', e.target.value);
+    });
+
+    async function incrementCoin(amount = 1) {
+      let coins = await window.electronAPI.loadPersistent?.('llmCoin');
+
+      if (typeof coins !== 'number') coins = 0;
+      coins += amount;
+      await window.electronAPI.savePersistent?.('llmCoin', coins);
+
+      return coins;
+    }
+
+    function renderHistory() {
+      historyList.innerHTML = promptHistory.map(
+        msg => `<li class="${msg.role === 'llm' ? 'llm' : ''}">
+          <b>${msg.role === 'user' ? 'You' : 'LLM'}:</b> ${msg.text}
+        </li>`
+      ).join('');
+      historyList.scrollTop = historyList.scrollHeight;
+    }
+
+    sendBtn.onclick = async () => {
+      const prompt = promptInput.value.trim();
+
+      if (!prompt) return;
+      promptHistory.push({ role: 'user', text: prompt });
+      renderHistory();
+      promptInput.value = '';
+      const llmPrompt = promptHistory.map(
+        msg => `${msg.role === 'user' ? 'User' : 'Assistant'}: ${msg.text}`
+      ).join('\n') + '\nAssistant:';
+
+      try {
+        const result = await window.electronAPI.llmGenerate('deepseek-r1:1.5b', llmPrompt);
+        promptHistory.push({ role: 'llm', text: result });
+        renderHistory();
+        await window.electronAPI.savePersistent('chatHistory', promptHistory);
+
+      } catch (e) {
+        promptHistory.push({ role: 'llm', text: "Error: " + e.message });
+        renderHistory();
+        
+      }
+      await incrementCoin(1);
+    };
+  </script>
+</body>
+</html>

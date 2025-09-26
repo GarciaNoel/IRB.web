@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Text Editor</title>
+  <style>
+    .page-te-root {
+      height: 100%;
+      display: flex;
+      flex-direction: row;
+      overflow: hidden;
+      font-family: sans-serif;
+    }
+    .page-te-root .editor-section {
+      flex: 2 1 0;
+      display: flex;
+      flex-direction: column;
+      box-sizing: border-box;
+      min-width: 0;
+      min-height: 0;
+      height: 100%;
+      background: #fafbfc;
+    }
+    .page-te-root .llm-section {
+      flex: 1 1 0;
+      display: flex;
+      flex-direction: column;
+      box-sizing: border-box;
+      min-width: 0;
+      min-height: 0;
+      height: 100%;
+      background: #fff;
+    }
+    .page-te-root #save-btn, .page-te-root #send-llm-btn {
+      margin-left: 8px;
+      margin-right: 8px;
+      margin-bottom: 12px;
+      margin-top: 12px;
+      font-size: 1em;
+      align-self: flex-end;
+    }
+    .page-te-root #editor, .page-te-root #code-input {
+      width: 100%;
+      font-size: 1.1em;
+      font-family: monospace;
+      box-sizing: border-box;
+      resize: vertical;
+      min-height: 60px;
+      flex: 1 1 0;
+      overflow: auto;
+      resize: none;
+    }
+    .page-te-root #llm-response {
+      background: #f4f4f4;
+      border: 1px solid #ccc;
+      font-family: monospace;
+      white-space: pre-wrap;
+      overflow: auto;
+      flex: 1 1 0;
+      min-height: 40px;
+    }
+    .page-te-root h3 {
+      margin: 0 0 8px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="page-te-root">
+    <div class="editor-section">
+      <textarea id="editor" placeholder="Type your text here..."></textarea>
+      <button id="save-btn">Save</button>
+    </div>
+    <div class="llm-section">
+      <div id="llm-response"></div>
+      <textarea id="code-input" placeholder="Paste code here to send to LLM..."></textarea>
+      <button id="send-llm-btn">Send</button>
+    </div>
+  </div>
+  <script>
+
+    (async () => {
+      const saved = await window.electronAPI.loadPersistent('editor');
+      if (typeof saved === 'string') {
+        document.getElementById('editor').value = saved;
+      }
+    })();
+
+    document.getElementById('editor').addEventListener('input', async (e) => {
+      await window.electronAPI.savePersistent('editor', e.target.value);
+    });
+
+    (async () => {
+      const saved = await window.electronAPI.loadPersistent('code-input');
+      if (typeof saved === 'string') {
+        document.getElementById('code-input').value = saved;
+      }
+    })();
+
+    document.getElementById('code-input').addEventListener('input', async (e) => {
+      await window.electronAPI.savePersistent('code-input', e.target.value);
+    });
+
+    document.getElementById('save-btn').onclick = function() {
+      const text = document.getElementById('editor').value;
+      const { dialog } = require('electron').remote || require('@electron/remote');
+      const fs = require('fs');
+
+      dialog.showSaveDialog({
+        title: 'Save Text File',
+        defaultPath: 'document.txt',
+        filters: [{ name: 'Text Files', extensions: ['txt'] }]
+      }).then(result => {
+        if (!result.canceled && result.filePath) {
+          fs.writeFileSync(result.filePath, text, 'utf-8');
+          alert('File saved!');
+        }
+      });
+    };
+
+    const chatHistory = [];
+
+    (async () => {
+      const savedHistory = await window.electronAPI.loadPersistent?.('editorChatHistory');
+      
+      if (Array.isArray(savedHistory)) {
+        chatHistory.push(...savedHistory);
+        renderChatHistory();
+
+      }
+    })();
+
+    async function incrementCoin(amount = 1) {
+      let coins = await window.electronAPI.loadPersistent?.('llmCoin');
+
+      if (typeof coins !== 'number') coins = 0;
+      coins += amount;
+      await window.electronAPI.savePersistent?.('llmCoin', coins);
+
+      return coins;
+    }
+
+    function renderChatHistory() {
+      const chatDiv = document.getElementById('llm-response');
+      chatDiv.innerHTML = chatHistory.map(msg =>
+        `<div style="margin-bottom:8px;">
+          <b>${msg.role === 'user' ? 'You' : 'LLM'}:</b> ${msg.text}
+        </div>`
+      ).join('');
+      chatDiv.scrollTop = chatDiv.scrollHeight;
+    }
+
+    document.getElementById('send-llm-btn').onclick = async function() {
+      const code = document.getElementById('code-input').value;
+
+      if (!code.trim()) return;
+      chatHistory.push({ role: 'user', text: code });
+      renderChatHistory();
+      await window.electronAPI.savePersistent?.('editorChatHistory', chatHistory);
+
+      const prompt = chatHistory.map(msg =>
+        `${msg.role === 'user' ? 'User' : 'Assistant'}: ${msg.text}`
+      ).join('\n') + '\nAssistant:';
+      const responseDiv = document.getElementById('llm-response');
+      responseDiv.textContent = "Waiting for LLM response...";
+
+      try {
+        const result = await window.electronAPI.llmGenerate('deepseek-r1:1.5b', prompt);
+        chatHistory.push({ role: 'llm', text: result });
+        renderChatHistory();
+        await window.electronAPI.savePersistent?.('editorChatHistory', chatHistory);
+        responseDiv.textContent = result;
+
+      } catch (e) {
+        responseDiv.textContent = "Error: " + e.message;
+
+      }
+      await incrementCoin(1);
+    };
+
+    /* SINGLE LLM CALL EXAMPLE
+    document.getElementById('send-llm-btn').onclick = async function() {
+      const code = document.getElementById('code-input').value;
+      const responseDiv = document.getElementById('llm-response');
+      responseDiv.textContent = "Waiting for LLM response...";
+
+      try {
+        const result = await window.electronAPI.llmGenerate('deepseek-r1:1.5b', code);
+        responseDiv.textContent = result;
+
+      } catch (e) {
+        responseDiv.textContent = "Error: " + e.message;
+
+      }
+    };
+    */
+  </script>
+</body>
+</html>

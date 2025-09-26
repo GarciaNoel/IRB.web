@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Marketplace</title>
+  <style>
+    .page-mp-root {
+      padding-left: 10px;
+    }
+    .llm-coin {
+      display: inline-block;
+      margin-left: 0;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="page-mp-root">
+    <h1>
+      Unlock Extensions
+    </h1>
+    <h3>  
+      <span class="llm-coin" id="llm-coin">LLM TOKEN(S) 0</span>
+    </h3>
+    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+      <input type="checkbox" id="my-check" style="accent-color: #4caf50;">
+      <span>page4.html - video watcher (0 tokens)</span>
+    </label>
+  </div>
+  <script>
+    (async () => {
+      const saved = await window.electronAPI.loadPersistent('myCheckState');
+      if (typeof saved === 'boolean') {
+        myCheck.checked = saved;
+        if (saved) myCheck.disabled = true;
+      }
+    })();
+
+    const myCheck = document.getElementById('my-check');
+    myCheck.addEventListener('change', async () => {
+      await window.electronAPI.savePersistent('myCheckState', myCheck.checked);
+      if (myCheck.checked) {
+        const appPath = await window.electronAPI.getAppPath();
+        const filePath = appPath + '/page4.html';
+        console.log(filePath);
+        const files = await window.electronAPI.openHtmlFilesByPath([filePath]);
+        console.log(files);
+        files.forEach(file => window.electronAPI.addTab(file.name, file.content));
+        myCheck.disabled = true;
+      }
+    });
+
+    let llmCoin = 0;
+    const llmCoinSpan = document.getElementById('llm-coin');
+
+    let refreshCoinDisplay = async () => {
+      const saved = await window.electronAPI.loadPersistent?.('llmCoin');
+
+      if (typeof saved === 'number') {
+        llmCoin = saved;
+        llmCoinSpan.textContent = `LLM TOKEN(S) ${llmCoin}`;
+
+      }
+    };
+
+    setInterval(refreshCoinDisplay, 2000);
+    refreshCoinDisplay();
+
+    async function incrementCoin() {
+      let saved = await window.electronAPI.loadPersistent?.('llmCoin');
+      let llmCoin = typeof saved === 'number' ? saved : 0;
+      llmCoin++;
+      await window.electronAPI.savePersistent?.('llmCoin', llmCoin);
+    }  
+  </script>
+</body>
+</html>

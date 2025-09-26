@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>LLM Agent</title>
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    #tabs {
+      display: flex;
+      border-bottom: 1px solid #ccc;
+      flex-shrink: 0;
+    }
+    .tab {
+      padding: 8px 16px;
+      cursor: pointer;
+      border: 1px solid #ccc;
+      border-bottom: none;
+      background: #eee;
+    }
+    .tab.active {
+      background: #fff;
+      font-weight: bold;
+    }
+    #tab-contents {
+      flex: 1 1 0;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      overflow: hidden;
+    }
+    #tab-contents > div {
+      display: none;
+      padding: 0;
+      height: 100%;
+      overflow: auto;
+    }
+    #tab-contents > div.active {
+      display: block;
+    }
+    .tab-content {
+      width: 100%;
+      height: 100%;
+      min-height: 0;
+      overflow: auto;
+    }
+  </style>
+</head>
+<body>
+  <div id="tabs"></div>
+  <div id="tab-contents"></div>
+  <script>
+    window.electronAPI.onDefaultPages(pages => {
+      pages.forEach(page => addTab(page.name, page.content));
+    });
+    const tabs = document.getElementById('tabs')
+    const tabContents = document.getElementById('tab-contents')
+    let tabData = []
+
+    function extractTitle(html) {
+      const match = html.match(/<title>(.*?)<\/title>/i);
+      return match ? match[1] : 'Untitled';
+    }
+
+    function addTab(name, content) {
+      const title = extractTitle(content);
+      const tabName = title || name;
+      const idx = tabData.length;
+      tabData.push({ name: tabName, content });
+      const tab = document.createElement('div');
+      tab.className = 'tab';
+      tab.textContent = tabName;
+
+      tab.onclick = () => setActiveTab(idx);
+      tabs.appendChild(tab);
+      const contentDiv = document.createElement('div');
+      contentDiv.className = 'tab-content';
+      contentDiv.innerHTML = content;
+      tabContents.appendChild(contentDiv);
+      executeScripts(contentDiv);
+      setActiveTab(idx);
+    }
+
+    function executeScripts(container) {
+      const scripts = container.querySelectorAll('script');
+
+      scripts.forEach(oldScript => {
+        const newScript = document.createElement('script');
+        
+        for (const attr of oldScript.attributes) {
+          newScript.setAttribute(attr.name, attr.value);
+        }
+        newScript.text = oldScript.text;
+        oldScript.parentNode.replaceChild(newScript, oldScript);
+      });
+    }
+
+    function setActiveTab(idx) {
+      Array.from(tabs.children).forEach((tab, i) => tab.classList.toggle('active', i === idx));
+      Array.from(tabContents.children).forEach((div, i) => div.classList.toggle('active', i === idx));
+    }
+
+    window.electronAPI.onAddTab(({ name, content }) => {
+      addTab(name, content);
+    });
+  </script>
+</body>
+</html>
