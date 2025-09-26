@@ -1,7 +1,6 @@
-// Author: Noel Garcia
+// Author: Noel Garci
 
-use rand::seq::SliceRandom;
-use rand::thread_rng;
+use rand::Rng;
 
 // fn main got lost in a sea or pool of nnothing..
 fn main() {
@@ -29,16 +28,10 @@ impl cargo {
         let dat = data_pack {
             datum: vec![1,2,3,4,5,6,7,8,9,0],
         };
-                
-        let mut rng = thread_rng();
-       
-        if let Some(random_element) = dat.datum..choose(&mut rng) {
-            println!("Random element from Vec<u8>: {}", random_element);
-        } else {
-            println!("The vector is empty.");
-        }
+        
+        let vec = dat.datum.clone();
 
-        let z = self.tel + (random_element*100);
+        let z = self.tel + (vec[0]) as i16;
     }
 
     pub fn receive(&self) -> i32 {
@@ -66,28 +59,29 @@ pub fn logic_redirect(oldcargo: cargo) -> cargo {
         rec: 50,
     };
 
-    let y = oldcargo.send();
-    println!("{}",c.receive(););
+    let _y = oldcargo.send();
+    println!("{}",c.receive());
     
     c.pipeclean();
 
     println!("{}",c.send());
+    return c;
 }
 
-struct slider {
-
-}
+#[derive(Copy, Clone)]
+struct slider;
 
 pub fn main_ad(){
-    let oldcargo = cargo {
+    let mut oldcargo = cargo {
         tel: 10,
         rec: 20,
     };
 
-    let y = slider {};
+    let y = slider;
+    let yy = y.clone();
 
     while true {
-        let x = main_redirect(slider);
+        let x = main_redirect(yy);
         if x {
             oldcargo = logic_redirect(oldcargo);
         }    
