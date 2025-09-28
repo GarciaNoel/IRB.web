@@ -62,7 +62,7 @@ impl cargo {
             let vec = dat.datum.clone();
             
             let mut rng = rand::thread_rng();
-            let wrb: bool = rng.gen_bool(CELLS as f64 / 126.0);
+            let wrb: bool = rng.gen_bool(-(CELLS as f64 / 126.0)+1.0);
 
             let mut idx = 0;
             if wrb { idx = 1;}
