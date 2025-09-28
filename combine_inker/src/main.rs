@@ -31,6 +31,8 @@ pub fn main_ad(){
 
 }
 
+static mut CELLS: i8 = 10;
+
 #[derive(Copy, Clone)]
 struct slider;
 
@@ -40,7 +42,7 @@ struct cargo {
 }
 
 struct data_pack {
-    datum: Vec<u8>,
+    datum: Vec<i8>,
 }
 
 impl cargo {
@@ -52,13 +54,27 @@ impl cargo {
     }
 
     pub fn pipeclean(&self) {
-        let dat = data_pack {
-            datum: vec![1,2,3,4,5,6,7,8,9,0],
-        };
-        
-        let vec = dat.datum.clone();
+        unsafe {
+            let dat = data_pack {
+                datum: vec![-1,1],
+            };
+            
+            let vec = dat.datum.clone();
+            
+            let mut rng = rand::thread_rng();
+            let wrb: bool = rng.gen_bool(CELLS as f64 / 126.0);
 
-        let z = self.tel + (vec[0]) as i16;
+            let mut idx = 0;
+            if wrb { idx = 1;}
+
+            let z = self.tel + (vec[idx]) as i16;
+        
+            if CELLS > 0 {
+                CELLS += vec[idx] as i8;
+            } else {
+                CELLS = 1;
+            }
+        }
     }
 
     pub fn receive(&self) -> i32 {
@@ -95,5 +111,11 @@ pub fn logic_redirect_db(oldcargo: cargo) -> cargo {
 }
 
 pub fn logic_redirect_pf() {
-    let x = 1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1;
+    unsafe {
+        let mut x = 0;
+        for i in 0..CELLS {
+            x += 1;
+        }
+        println!("{}",x);
+    }
 }
