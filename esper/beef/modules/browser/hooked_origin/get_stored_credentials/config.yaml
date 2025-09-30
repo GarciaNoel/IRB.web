@@ -1,0 +1,17 @@
+#
+# Copyright (c) 2006-2025 Wade Alcorn - wade@bindshell.net
+# Browser Exploitation Framework (BeEF) - https://beefproject.com
+# See the file 'doc/COPYING' for copying permission
+#
+beef:
+    module:
+        get_stored_credentials:
+            enable: true
+            category: ["Browser", "Hooked Domain"]
+            name: "Get Stored Credentials"
+            description: "This module retrieves saved username/password combinations from the login page on the hooked origin.<br /><br />It will fail if more than one set of origin credentials are saved in the browser."
+            authors: ["bcoles"]
+            target:
+                working: ["FF"]
+                not_working: ["All"]
+
