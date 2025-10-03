@@ -7,5 +7,7 @@ includes a bitcoin to pay your SMUDGE cleaning of the www. by using AI and the i
 
 The SMUDGE protocol says information like on paper can SMUDGE your CPU to gear locks that can bypass
 brute force hacking through packet sniffing machine that generate SMUDGE to gear lock
-information in order to steal it over a networked cable or WIFI
+information in order to steal it over a networked cable or WIFI.
 
+I plan to make IRB mostly to force browsers who use IRB to forcefully support Python 3.
+The browser I make will require Python to work and will have an ecosystem of Python first apps.
