@@ -12,6 +12,44 @@ use std::time::Duration;
 /// Global cell counter (safe, atomic)
 static CELLS: AtomicI8 = AtomicI8::new(10);
 
+// Audio playback uses the rodio crate. The chosen version in Cargo.toml
+// (updated to a version that exposes OutputStream and Sink::try_new)
+// supports the code below.
+use rodio::{Decoder, Sink, Source};
+use rodio::OutputStream;
+use std::fs::File;
+use std::io::BufReader;
+
+fn play_sound(path: &str) {
+    // Use OutputStream::try_default() to obtain a stream and handle.
+    match OutputStream::try_default() {
+        Ok((stream, stream_handle)) => {
+            let file = File::open(path);
+            if let Ok(file) = file {
+                match Decoder::new(BufReader::new(file)) {
+                    Ok(source) => {
+                        match Sink::try_new(&stream_handle) {
+                            Ok(sink) => {
+                                sink.append(source);
+                                // Block the current thread until playback finishes so
+                                // that `stream` can be safely dropped afterwards.
+                                sink.sleep_until_end();
+                                drop(stream);
+                            }
+                            Err(e) => eprintln!("Failed to create sink: {}", e),
+                        }
+                    }
+                    Err(e) => eprintln!("Failed to decode audio: {} ({})", path, e),
+                }
+            } else {
+                eprintln!("Failed to open audio file: {}", path);
+            }
+        }
+        Err(e) => eprintln!("No default audio output device found: {}", e),
+    }
+}
+
+
 // ───────────────────────── CORE STRUCTURES ─────────────────────────
 
 #[derive(Copy, Clone)]
@@ -160,11 +198,26 @@ impl Resonator {
     fn echo(&self) {
         println!("Executing genre logic: {}", self.genre_gate);
         match self.genre_gate {
-            "XOR" => println!("Dual-state chaos triggered."),
-            "NAND" => println!("Resistance gate activated."),
-            "NULL" => println!("Ambient residue returned."),
-            "NOT" => println!("Inversion protocol engaged."),
-            "AND" => println!("Sentiment stack resolved."),
+            "XOR" => {
+                println!("Dual-state chaos triggered.");
+                play_sound("sounds/ris.mp3");
+            }
+            "NAND" => {
+                println!("Resistance gate activated.");
+                play_sound("sounds/3s.wav");
+            }
+            "NULL" => {
+                println!("Ambient residue returned.");
+                play_sound("sounds/comedie.mp3");
+            }
+            "NOT" => {
+                println!("Inversion protocol engaged.");
+                play_sound("sounds/ping.mp3");
+            }
+            "AND" => {
+                println!("Sentiment stack resolved.");
+                play_sound("sounds/stomp.mp3");
+            }
             _ => println!("Entropy overflow."),
         }
     }
@@ -205,14 +258,14 @@ fn main() {
     thread::spawn(move || {
         loop {
             smudge_engine(smudge_clone.clone(), &mut pulse, &mut gear, &mut smudge);
-            thread::sleep(Duration::from_millis(500));
+            thread::sleep(Duration::from_millis(200));
         }
     });
 
     thread::spawn(move || {
         loop {
             resonator_compiler(resonator_clone.clone(), &mut res);
-            thread::sleep(Duration::from_millis(700));
+            thread::sleep(Duration::from_millis(200));
         }
     });
 
