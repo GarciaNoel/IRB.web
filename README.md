@@ -32,7 +32,7 @@ Economics — The browser may include micro-payments (e.g., Bitcoin) to compensa
 
 ### Goals
 
-Build a minimal Rust browser shell that:
+#### Build a minimal Rust browser shell that:
 
 supports Python-embedded apps,
 experiments with in-browser privacy primitives (SMUDGE),
@@ -40,12 +40,12 @@ explores micro-payment flows for compute/cleanup operations.
 Provide a platform for experimenting with alternatives to the current “always-tracked”, convenience-first web.
 Getting started (notes)
 
-This repo currently contains:
+#### This repo currently contains:
 
 A small Rust prototype exploring stateful behavior (see src/main.rs).
 Conceptual notes on the SMUDGE protocol and architecture.
 
-To run the Rust prototype:
+#### To run the Rust prototype:
 
 Install Rust (stable).
 
