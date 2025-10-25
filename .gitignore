@@ -1,1 +1,3 @@
-./IRB-Linker/linker_v4/target/*
+IRB-Linker/linker_v4/target/
+IRB-Linker/linker_v5/target/
+HTML-Marketplace/node_modules/
