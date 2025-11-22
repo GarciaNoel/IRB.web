@@ -1,0 +1,7 @@
+[[outside shell; file format within text file for user;]]
+.contrasena./sig[LIFEUP]
+.sig./contrasena[DEATH FRANKENSTEIN]
+/sig[kandjinetizhe]
+[[repeating format; this is the word builder for OLC file format ok;]]
+[[i expect the javascript file exactly[TODO] to build an .OLC file starting with olc.txt;]]
+../[]
