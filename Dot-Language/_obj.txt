@@ -1,0 +1,11 @@
+captcha "dot language"
+
+captcha "process runs" pragma "x ob x ob x ob"
+
+pragma  "GROUPS RUNS FINDS"
+
+captcha "this language pulled this module has this text file to enter done"
+
+captcha "now prove i have this and can just publish it ok"
+
+mul GOLANG runs DICTSOLVER proc PROGFILE extends HEADER aifill AUTOMATEBAT
