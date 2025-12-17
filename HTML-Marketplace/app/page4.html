@@ -1,17 +1,319 @@
 <!DOCTYPE html>
-<html>
+
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Video Watcher</title>
-  <style>
-    .page-vw-root {
-      padding-left: 10px;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mandala Coloring Book</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+body {
+font-family: 'Inter', sans-serif;
+overflow: hidden;
+}
+#mandala-container svg {
+width: 100%;
+height: 100%;
+}
+.color-swatch {
+transition: transform 0.1s ease-in-out;
+}
+.color-swatch.selected {
+transform: scale(1.2);
+box-shadow: 0 0 0 3px white, 0 0 0 5px black;
+}
+.gallery-item {
+cursor: pointer;
+transition: transform 0.2s ease;
+}
+.gallery-item:hover {
+transform: scale(1.05);
+}
+</style>
 </head>
-<body>
-  <div class="page-vw-root">
-    <h1>Watch</h1>
-  </div>
+<body class="bg-gray-100 flex flex-col md:flex-row h-screen antialiased">
+
+<!-- Main Content -->
+<main class="flex-1 flex flex-col items-center justify-center p-4 md:p-8 overflow-auto">
+    <div id="mandala-wrapper" class="w-full max-w-[70vh] aspect-square bg-white rounded-2xl shadow-lg flex items-center justify-center p-2">
+        <div id="mandala-container" class="w-full h-full">
+            <!-- Mandala SVG will be injected here -->
+        </div>
+    </div>
+</main>
+
+<!-- Sidebar / Controls -->
+<aside class="w-full md:w-80 bg-white p-6 shadow-xl md:shadow-none flex flex-col space-y-6 overflow-y-auto">
+    <div>
+        <h1 class="text-2xl font-bold text-gray-800">Mandala Coloring</h1>
+        <p class="text-sm text-gray-500">Select a color and tap a shape to fill it.</p>
+    </div>
+
+    <!-- Color Palette -->
+    <div>
+        <h2 class="text-lg font-semibold mb-3 text-gray-700">Color Palette</h2>
+        <div id="color-palette" class="grid grid-cols-6 gap-3">
+            <!-- Colors will be injected here -->
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <div>
+        <h2 class="text-lg font-semibold mb-3 text-gray-700">Actions</h2>
+        <div class="flex flex-col space-y-3">
+            <button id="new-mandala-btn" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg shadow transition-transform transform hover:scale-105">
+                New Mandala
+            </button>
+            <button id="save-mandala-btn" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg shadow transition-transform transform hover:scale-105">
+                Save to Gallery
+            </button>
+        </div>
+    </div>
+    
+    <!-- Gallery -->
+    <div class="flex-1 flex flex-col min-h-0">
+         <h2 class="text-lg font-semibold mb-3 text-gray-700">My Gallery</h2>
+        <div id="gallery-container" class="flex-1 bg-gray-100 rounded-lg p-3 overflow-y-auto">
+            <div id="gallery-grid" class="grid grid-cols-3 gap-3">
+                <!-- Gallery items will be injected here -->
+            </div>
+             <p id="gallery-loading" class="text-center text-gray-500">Loading gallery...</p>
+             <p id="gallery-empty" class="text-center text-gray-500 hidden">Your gallery is empty. Save a mandala to see it here!</p>
+        </div>
+    </div>
+</aside>
+
+<!-- Firebase and App Logic -->
+<script type="module">
+    // --- Firebase Imports ---
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, doc, collection, addDoc, onSnapshot, setDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    // --- Firebase Config ---
+    const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : { apiKey: "AIza...", authDomain: "...", projectId: "..."};
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-mandala-app';
+    
+    // --- App State ---
+    let db, auth;
+    let userId = null;
+    let currentColor = '#B5EAD7'; // Default color
+    let unsubscribeGallery = null; // To detach firestore listener
+
+    const colors = [
+        '#FFADAD', '#FFD6A5', '#FDFFB6', '#CAFFBF', '#9BF6FF', '#A0C4FF', '#BDB2FF', '#FFC6FF',
+        '#FF6B6B', '#FF9F4F', '#F9DC5C', '#A7D489', '#4BC0C8', '#548CFF', '#8A63D2', '#D950A9',
+        '#FFFFFF', '#DDDDDD', '#AAAAAA', '#777777', '#444444', '#000000', '#8B4513', '#DEB887'
+    ];
+
+    // --- DOM Elements ---
+    const mandalaContainer = document.getElementById('mandala-container');
+    const colorPalette = document.getElementById('color-palette');
+    const newMandalaBtn = document.getElementById('new-mandala-btn');
+    const saveMandalaBtn = document.getElementById('save-mandala-btn');
+    const galleryGrid = document.getElementById('gallery-grid');
+    const galleryLoading = document.getElementById('gallery-loading');
+    const galleryEmpty = document.getElementById('gallery-empty');
+
+    // --- Mandala Generation ---
+    function generateMandala() {
+        mandalaContainer.innerHTML = '';
+        const svgNS = "http://www.w3.org/2000/svg";
+        const svg = document.createElementNS(svgNS, "svg");
+        svg.setAttribute('viewBox', '0 0 100 100');
+
+        const symmetry = Math.floor(Math.random() * 10) + 6; // 6 to 15 slices
+        const angleStep = 360 / symmetry;
+
+        const baseGroup = document.createElementNS(svgNS, 'g');
+
+        const numShapes = Math.floor(Math.random() * 8) + 5;
+        for (let i = 0; i < numShapes; i++) {
+            let shape;
+            const shapeType = Math.random();
+            
+            if (shapeType < 0.5) { // Circle
+                shape = document.createElementNS(svgNS, 'circle');
+                const r = Math.random() * 8 + 1;
+                const angle = (Math.random() * angleStep / 2) - (angleStep / 4);
+                const dist = Math.random() * 40 + 5;
+                shape.setAttribute('cx', dist * Math.cos(angle * Math.PI / 180));
+                shape.setAttribute('cy', dist * Math.sin(angle * Math.PI / 180));
+                shape.setAttribute('r', r);
+            } else { // Path (like a petal)
+                shape = document.createElementNS(svgNS, 'path');
+                const x1 = Math.random() * 15 + 10;
+                const y1 = (Math.random() - 0.5) * 10;
+                const x2 = Math.random() * 20 + 25;
+                const y2 = (Math.random() - 0.5) * 20;
+                const d = `M0,0 C${x1},${y1} ${x2},${y2} ${Math.random() * 45 + 5},0 Z`;
+                shape.setAttribute('d', d);
+                shape.setAttribute('transform', `rotate(${ (Math.random() - 0.5) * angleStep })`);
+            }
+
+            shape.setAttribute('fill', 'white');
+            shape.setAttribute('stroke', 'black');
+            shape.setAttribute('stroke-width', '0.5');
+            baseGroup.appendChild(shape);
+        }
+        
+        for (let i = 0; i < symmetry; i++) {
+            const group = baseGroup.cloneNode(true);
+            group.setAttribute('transform', `translate(50, 50) rotate(${i * angleStep})`);
+            svg.appendChild(group);
+        }
+        
+        mandalaContainer.appendChild(svg);
+    }
+
+    // --- Coloring Logic ---
+    function setupColorPalette() {
+        colors.forEach(color => {
+            const swatch = document.createElement('div');
+            swatch.className = 'color-swatch w-10 h-10 rounded-full cursor-pointer border-2 border-gray-200';
+            swatch.style.backgroundColor = color;
+            if (color === currentColor) {
+                swatch.classList.add('selected');
+            }
+            swatch.addEventListener('click', () => {
+                currentColor = color;
+                document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('selected'));
+                swatch.classList.add('selected');
+            });
+            colorPalette.appendChild(swatch);
+        });
+    }
+
+    function handleColoring(e) {
+        const target = e.target;
+        if (target.tagName === 'path' || target.tagName === 'circle') {
+            target.setAttribute('fill', currentColor);
+        }
+    }
+
+    // --- Gallery Logic ---
+    async function saveMandala() {
+         if (!userId) {
+            console.error("User not logged in, cannot save.");
+            // Optionally show a message to the user
+            return;
+        }
+        saveMandalaBtn.disabled = true;
+        saveMandalaBtn.textContent = 'Saving...';
+
+        const svgContent = mandalaContainer.innerHTML;
+        try {
+            const userMandalasCollection = collection(db, 'artifacts', appId, 'users', userId, 'mandalas');
+            await addDoc(userMandalasCollection, {
+                svg: svgContent,
+                createdAt: serverTimestamp()
+            });
+        } catch (error) {
+            console.error("Error saving mandala: ", error);
+        } finally {
+            saveMandalaBtn.disabled = false;
+            saveMandalaBtn.textContent = 'Save to Gallery';
+        }
+    }
+
+    function loadGallery() {
+        if (unsubscribeGallery) {
+            unsubscribeGallery(); // Detach previous listener
+        }
+         if (!userId) return;
+
+        galleryLoading.classList.remove('hidden');
+        galleryEmpty.classList.add('hidden');
+        
+        const userMandalasCollection = collection(db, 'artifacts', appId, 'users', userId, 'mandalas');
+        unsubscribeGallery = onSnapshot(userMandalasCollection, (snapshot) => {
+            galleryGrid.innerHTML = '';
+            galleryLoading.classList.add('hidden');
+
+            if (snapshot.empty) {
+                galleryEmpty.classList.remove('hidden');
+            } else {
+                galleryEmpty.classList.add('hidden');
+                snapshot.docs.sort((a,b) => b.data().createdAt?.seconds - a.data().createdAt?.seconds) // Sort descending
+                .forEach(docSnap => {
+                    const data = docSnap.data();
+                    const galleryItem = document.createElement('div');
+                    galleryItem.className = 'gallery-item aspect-square bg-white rounded-md p-1 shadow-sm overflow-hidden';
+                    galleryItem.innerHTML = data.svg;
+                    
+                    galleryItem.addEventListener('click', () => {
+                        mandalaContainer.innerHTML = data.svg;
+                    });
+
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.innerHTML = '&times;';
+                    deleteBtn.className = 'absolute top-0 right-1 text-red-500 font-bold hover:text-red-700';
+                    deleteBtn.style.lineHeight = '1';
+                    deleteBtn.onclick = async (e) => {
+                        e.stopPropagation();
+                        if (confirm('Are you sure you want to delete this mandala?')) {
+                            const docRef = doc(db, 'artifacts', appId, 'users', userId, 'mandalas', docSnap.id);
+                            await deleteDoc(docRef);
+                        }
+                    };
+                    
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'relative';
+                    wrapper.appendChild(galleryItem);
+                    wrapper.appendChild(deleteBtn);
+                    galleryGrid.appendChild(wrapper);
+                });
+            }
+        }, error => {
+            console.error("Error loading gallery:", error);
+            galleryLoading.textContent = "Error loading gallery.";
+        });
+    }
+
+
+    // --- Initialization ---
+    async function init() {
+        const app = initializeApp(firebaseConfig);
+        db = getFirestore(app);
+        auth = getAuth(app);
+        
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                console.log("User is signed in:", user.uid);
+                userId = user.uid;
+                loadGallery();
+            } else {
+                console.log("User is signed out.");
+                if(unsubscribeGallery) unsubscribeGallery();
+                userId = null;
+                galleryGrid.innerHTML = '';
+                galleryEmpty.classList.remove('hidden');
+                galleryLoading.classList.add('hidden');
+            }
+        });
+
+        try {
+            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                await signInWithCustomToken(auth, __initial_auth_token);
+            } else {
+                await signInAnonymously(auth);
+            }
+        } catch (error) {
+            console.error("Authentication failed:", error);
+        }
+        
+        setupColorPalette();
+        generateMandala();
+
+        // Event Listeners
+        newMandalaBtn.addEventListener('click', generateMandala);
+        mandalaContainer.addEventListener('click', handleColoring);
+        saveMandalaBtn.addEventListener('click', saveMandala);
+    }
+
+    window.onload = init;
+</script>
+
 </body>
 </html>
