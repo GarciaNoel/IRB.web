@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Knob + Two Switches</title>
+<style>
+  body {
+    background: #111;
+    color: #eee;
+    font-family: Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    margin: 0;
+  }
+
+  h2 { margin-bottom: 5px; }
+
+  .panel {
+    text-align: center;
+  }
+
+  /* --- KNOB --- */
+  .knob-wrapper {
+    position: relative;
+    width: 200px;
+    height: 200px;
+    margin: 20px auto;
+  }
+
+  .knob {
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    width: 180px;
+    height: 180px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, #555, #222);
+    box-shadow: 0 0 10px #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transform: rotate(0deg);
+    transition: transform 0.2s ease-out;
+  }
+
+  .indicator {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    width: 4px;
+    height: 30px;
+    background: #ffcc00;
+    transform: translateX(-50%);
+    border-radius: 2px;
+  }
+
+  .top-click-area {
+    position: absolute;
+    top: 0;
+    left: 25%;
+    width: 50%;
+    height: 40px;
+    cursor: pointer;
+  }
+
+  .push-button {
+    position: relative;
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, #999, #444);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.7);
+    cursor: pointer;
+    transition: transform 0.1s ease-out, box-shadow 0.1s ease-out;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #eee;
+    font-size: 14px;
+    user-select: none;
+  }
+
+  .push-button.pressed {
+    transform: translateY(4px);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.7) inset;
+    background: radial-gradient(circle at 30% 30%, #777, #333);
+  }
+
+  .click-out-ring {
+    position: absolute;
+    inset: 25px;
+    border-radius: 50%;
+    border: 2px dashed rgba(255, 255, 255, 0.1);
+    cursor: pointer;
+  }
+
+  /* --- SWITCHES --- */
+  .switches {
+    display: flex;
+    gap: 40px;
+    margin-top: 30px;
+    justify-content: center;
+  }
+
+  .switch {
+    width: 70px;
+    height: 120px;
+    background: #222;
+    border-radius: 10px;
+    box-shadow: 0 0 10px #000 inset;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    position: relative;
+  }
+
+  .switch-toggle {
+    width: 40px;
+    height: 70px;
+    background: #666;
+    border-radius: 6px;
+    transition: transform 0.15s ease-out, background 0.15s ease-out;
+  }
+
+  .switch.on .switch-toggle {
+    transform: translateY(-20px);
+    background: #00cc66;
+  }
+
+  .switch.off .switch-toggle {
+    transform: translateY(20px);
+    background: #cc3333;
+  }
+
+  .status {
+    margin-top: 10px;
+    font-size: 14px;
+    color: #ccc;
+  }
+</style>
+</head>
+<body>
+
+<div class="panel">
+  <h2>Knob + Two Switches</h2>
+
+  <div class="knob-wrapper">
+    <div class="top-click-area" id="topArea"></div>
+
+    <div class="knob" id="knob">
+      <div class="indicator"></div>
+      <div class="click-out-ring" id="clickOutRing"></div>
+      <div class="push-button" id="pushButton">PUSH</div>
+    </div>
+  </div>
+
+  <div class="switches">
+    <div class="switch off" id="switch1">
+      <div class="switch-toggle"></div>
+    </div>
+
+    <div class="switch off" id="switch2">
+      <div class="switch-toggle"></div>
+    </div>
+  </div>
+
+  <div class="status" id="statusText">
+    Position: 0 / 3 • Button: OUT • Switch1: OFF • Switch2: OFF
+  </div>
+</div>
+
+<script>
+  const knob = document.getElementById('knob');
+  const topArea = document.getElementById('topArea');
+  const pushButton = document.getElementById('pushButton');
+  const clickOutRing = document.getElementById('clickOutRing');
+  const statusText = document.getElementById('statusText');
+
+  const switch1 = document.getElementById('switch1');
+  const switch2 = document.getElementById('switch2');
+
+  let position = 0;
+  const steps = 4;
+  let isPressed = false;
+
+  function updateStatus() {
+    const btnState = isPressed ? 'IN' : 'OUT';
+    const sw1 = switch1.classList.contains('on') ? 'ON' : 'OFF';
+    const sw2 = switch2.classList.contains('on') ? 'ON' : 'OFF';
+
+    statusText.textContent =
+      `Position: ${position} / ${steps - 1} • Button: ${btnState} • Switch1: ${sw1} • Switch2: ${sw2}`;
+  }
+
+  function updateKnob() {
+    const angle = (360 / steps) * position;
+    knob.style.transform = `rotate(${angle}deg)`;
+    updateStatus();
+  }
+
+  topArea.addEventListener('click', () => {
+    position = (position + 1) % steps;
+    updateKnob();
+  });
+
+  pushButton.addEventListener('click', () => {
+    if (isPressed) return;
+    isPressed = true;
+    pushButton.classList.add('pressed');
+    updateStatus();
+  });
+
+  clickOutRing.addEventListener('click', () => {
+    if (!isPressed) return;
+    isPressed = false;
+    pushButton.classList.remove('pressed');
+    updateStatus();
+  });
+
+  function toggleSwitch(sw) {
+    if (sw.classList.contains('on')) {
+      sw.classList.remove('on');
+      sw.classList.add('off');
+    } else {
+      sw.classList.remove('off');
+      sw.classList.add('on');
+    }
+    updateStatus();
+  }
+
+  switch1.addEventListener('click', () => toggleSwitch(switch1));
+  switch2.addEventListener('click', () => toggleSwitch(switch2));
+
+  updateKnob();
+</script>
+
+</body>
+</html>

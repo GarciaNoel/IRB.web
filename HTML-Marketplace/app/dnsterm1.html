@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>4-Click Knob with Push Button</title>
+  <style>
+    body {
+      background: #111;
+      color: #eee;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .panel {
+      text-align: center;
+    }
+
+    .knob-wrapper {
+      position: relative;
+      width: 200px;
+      height: 200px;
+      margin: 20px auto;
+    }
+
+    .knob {
+      position: absolute;
+      inset: 0;
+      margin: auto;
+      width: 180px;
+      height: 180px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, #555, #222);
+      box-shadow: 0 0 10px #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transform: rotate(0deg);
+      transition: transform 0.2s ease-out;
+    }
+
+    /* Indicator line at the top of the knob */
+    .indicator {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      width: 4px;
+      height: 30px;
+      background: #ffcc00;
+      transform: translateX(-50%);
+      border-radius: 2px;
+    }
+
+    /* "Top click" hit area – only clicks here rotate the knob */
+    .top-click-area {
+      position: absolute;
+      top: 0;
+      left: 25%;
+      width: 50%;
+      height: 40px;
+      cursor: pointer;
+      /* for debugging: */
+      /* background: rgba(255, 0, 0, 0.1); */
+    }
+
+    /* Center push button */
+    .push-button {
+      position: relative;
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, #999, #444);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.7);
+      cursor: pointer;
+      transition: transform 0.1s ease-out, box-shadow 0.1s ease-out;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #eee;
+      font-size: 14px;
+      user-select: none;
+    }
+
+    .push-button.pressed {
+      transform: translateY(4px);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.7) inset;
+      background: radial-gradient(circle at 30% 30%, #777, #333);
+    }
+
+    /* Click-out ring (user must click this to reset the button) */
+    .click-out-ring {
+      position: absolute;
+      inset: 25px;
+      border-radius: 50%;
+      border: 2px dashed rgba(255, 255, 255, 0.1);
+      cursor: pointer;
+    }
+
+    .status {
+      margin-top: 10px;
+      font-size: 14px;
+      color: #ccc;
+    }
+
+  </style>
+</head>
+<body>
+  <div class="panel">
+    <h2>4-Click Knob with Push-In Button</h2>
+    <p style="font-size: 13px; color: #aaa;">
+      Click the <strong>top zone</strong> of the knob to rotate (4 steps).<br>
+      Press the <strong>center button</strong> to push in.<br>
+      Click the <strong>dashed ring</strong> to “click out” before pressing again.
+    </p>
+
+    <div class="knob-wrapper">
+      <!-- Only this top area rotates the knob -->
+      <div class="top-click-area" id="topArea" title="Click here to rotate knob"></div>
+
+      <div class="knob" id="knob">
+        <div class="indicator"></div>
+        <!-- click-out ring -->
+        <div class="click-out-ring" id="clickOutRing" title="Click here to click out"></div>
+        <!-- push-in button -->
+        <div class="push-button" id="pushButton">
+          PUSH
+        </div>
+      </div>
+    </div>
+
+    <div class="status" id="statusText">
+      Position: 0 / 3 • Button: OUT
+    </div>
+  </div>
+
+  <script>
+    const knob = document.getElementById('knob');
+    const topArea = document.getElementById('topArea');
+    const pushButton = document.getElementById('pushButton');
+    const clickOutRing = document.getElementById('clickOutRing');
+    const statusText = document.getElementById('statusText');
+
+    // 4 discrete positions: 0, 1, 2, 3
+    let position = 0;
+    const steps = 4;
+
+    // Button state
+    let isPressed = false;
+
+    function updateKnob() {
+      // 360 / 4 = 90 degrees per step
+      const angle = (360 / steps) * position;
+      knob.style.transform = `rotate(${angle}deg)`;
+      updateStatus();
+    }
+
+    function updateStatus() {
+      const btnState = isPressed ? 'IN' : 'OUT';
+      statusText.textContent = `Position: ${position} / ${steps - 1} • Button: ${btnState}`;
+    }
+
+    // Rotate knob by clicking the top area only
+    topArea.addEventListener('click', () => {
+      position = (position + 1) % steps;
+      updateKnob();
+    });
+
+    // Push-in button: only works if button is currently OUT
+    pushButton.addEventListener('click', () => {
+      if (isPressed) {
+        // Already pressed in; do nothing until it's clicked out
+        return;
+      }
+      isPressed = true;
+      pushButton.classList.add('pressed');
+      updateStatus();
+    });
+
+    // Click-out ring: resets the button to OUT so it can be pressed again
+    clickOutRing.addEventListener('click', () => {
+      if (!isPressed) return;
+      isPressed = false;
+      pushButton.classList.remove('pressed');
+      updateStatus();
+    });
+
+    // Initial state
+    updateKnob();
+  </script>
+</body>
+</html>
