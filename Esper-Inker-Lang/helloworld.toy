@@ -1,0 +1,11 @@
+let x = 5;
+let y = 10;
+
+if (x < y) {
+    print "x is smaller";
+}
+
+while (x < 8) {
+    print x;
+    let x = x + 1;
+}
